@@ -8,18 +8,47 @@
         .charimg {
             image-rendering: crisp-edges;
         }
+        #charbuffer {
+            font-family: monospace;
+        }
+        #charbuffer.textmode {
+            font-size: 50%;
+        }
+        #charbuffer.gfxmode {
+            font-size: 100%;
+        }
     </style>
     <script src="fontbuilder.js"></script>
     <title>Font Builder</title>
 </head>
 <body>
-    <div id="container" class="container">
+    <div class="container">
         <div class="row">
             <div class="col">
-                <table id="charpicker" class="table table-sm"></table>
+                <table id="charpicker" class="table table-sm table-bordered"></table>
             </div>
             <div class="col text-center">
                 <canvas id="chardrawer" width="327" height="327"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-check form-check-inline">
+                    <input type="radio" name="graphicsmode" id="textmode" class="form-check-input" value="text">
+                    <label for="textmode" class="form-check-label">text</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="radio" name="graphicsmode" id="gfxmode" class="form-check-input" value="gfx">
+                    <label for="gfxmode" class="form-check-label">gfx</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <canvas id="framebuffer" width="642" height="482"></canvas>
+            </div>
+            <div class="col">
+                <textarea name="charbuffer" id="charbuffer" class="textmode" cols="80" rows="30"></textarea>
             </div>
         </div>
     </div>

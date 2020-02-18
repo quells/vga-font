@@ -4,11 +4,17 @@ const charDrawerPixelSize = 5 * charSize;
 var currentChar = 0;
 var chars = [];
 
+var graphicsMode = 'text';
+
 window.onload = () => {
   loadChars();
 
   initCharPicker();
   initCharDrawer();
+  initModeSelector();
+  initCharBuffer();
+
+  redrawFrameBuffer();
 };
 
 const loadChars = () => {
@@ -72,7 +78,7 @@ const initCharPicker = () => {
       img.setAttribute('id', `char${jh}${ih}`);
       img.setAttribute('width', charPickerCellSize);
       img.setAttribute('height', charPickerCellSize);
-      img.setAttribute('src', charImg(j*16 + i));
+      img.setAttribute('src', charImg(j*16 + i).toDataURL());
       img.setAttribute('class', 'charimg');
       img.onclick = selectChar;
       cell.appendChild(img);
@@ -101,7 +107,7 @@ const charImg = (idx) => {
     }
   });
 
-  return canvas.toDataURL();
+  return canvas;
 };
 
 const initCharDrawer = () => {
@@ -178,7 +184,9 @@ const togglePixel = (e) => {
   // redraw charpicker
   const hidx = toHexString([currentChar]);
   const img = document.getElementById(`char${hidx}`);
-  img.setAttribute('src', charImg(currentChar));
+  img.setAttribute('src', charImg(currentChar).toDataURL());
+
+  redrawFrameBuffer();
 };
 
 const toHexString = (byteArray) => {
@@ -189,4 +197,66 @@ const toHexString = (byteArray) => {
 
 const fromHexString = (hex) => {
   return new Uint8Array(hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+}
+
+const initModeSelector = () => {
+  document.getElementsByName('graphicsmode').forEach((radio) => {
+    radio.addEventListener('change', handleModeSelected);
+  });
+};
+
+const handleModeSelected = (e) => {
+  graphicsMode = e.target.value;
+
+  redrawCharBuffer();
+  redrawFrameBuffer();
+};
+
+const initCharBuffer = () => {
+  const cb = document.getElementById('charbuffer');
+  cb.onchange = redrawFrameBuffer;
+  cb.oninput = redrawFrameBuffer;
+  redrawCharBuffer();
+}
+
+const redrawCharBuffer = () => {
+  const cb = document.getElementById('charbuffer');
+  if (graphicsMode === 'text') {
+    cb.classList.replace('gfxmode', 'textmode');
+    cb.setAttribute('cols', 80);
+  } else {
+    cb.classList.replace('textmode', 'gfxmode');
+    cb.setAttribute('cols', 40);
+  }
+}
+
+const redrawFrameBuffer = () => {
+  const fb = document.getElementById('framebuffer');
+  const ctx = fb.getContext('2d');
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, 640, 480);
+
+  const cb = document.getElementById('charbuffer').value;
+  for (let idx = 0; idx < cb.length; idx++) {
+    const char = cb.charCodeAt(idx);
+    const img = charImg(char);
+
+    var i, j, w, h;
+    if (graphicsMode === 'text') {
+      i = idx % 80;
+      j = Math.floor(idx / 80);
+      w = charSize;
+      h = 2 * charSize;
+    } else {
+      i = idx % 40;
+      j = Math.floor(idx / 40);
+      w = 2 * charSize;
+      h = 2 * charSize;
+    }
+    x = 1 + i * w;
+    y = 1 + j * h;
+
+    ctx.drawImage(img, x, y, w, h);
+  }
 }
