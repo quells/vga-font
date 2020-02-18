@@ -1,5 +1,6 @@
-const charPickerCellSize = 24;
-const charDrawerPixelSize = 40;
+const charSize = 8;
+const charPickerCellSize = 3 * charSize;
+const charDrawerPixelSize = 5 * charSize;
 var currentChar = 0;
 var chars = [];
 
@@ -18,7 +19,7 @@ const loadChars = () => {
   }
   const parsed = JSON.parse(saved);
   chars = parsed.map((hex) => {
-    return [1, 0, 0, 0, 0, 0, 0, 255];
+    return fromHexString(hex);
   });
 };
 
@@ -30,7 +31,7 @@ const saveChars = () => {
 const initChars = () => {
   chars = [];
   for (let i = 0; i < 256; i++) {
-    const char = [0, 0, 0, 0, 0, 0, 0, 0];
+    const char = new Uint8Array(charSize);
     chars.push(char);
   }
 };
@@ -71,6 +72,8 @@ const initCharPicker = () => {
       img.setAttribute('id', `char${jh}${ih}`);
       img.setAttribute('width', charPickerCellSize);
       img.setAttribute('height', charPickerCellSize);
+      img.setAttribute('src', charImg(j*16 + i));
+      img.setAttribute('class', 'charimg');
       img.onclick = selectChar;
       cell.appendChild(img);
       nr.appendChild(cell);
@@ -79,6 +82,26 @@ const initCharPicker = () => {
     tbody.appendChild(nr);
   }
   table.appendChild(tbody);
+};
+
+const charImg = (idx) => {
+  const char = chars[idx];
+  const canvas = document.createElement('canvas');
+  canvas.width = charSize;
+  canvas.height = charSize;
+  const ctx = canvas.getContext('2d');
+
+  // draw char
+  ctx.fillStyle = '#000';
+  char.forEach((line, j) => {
+    for (let i = 0; i < charSize; i++) {
+      if (line & (1 << i)) {
+        ctx.fillRect(i, j, 1, 1);
+      }
+    }
+  });
+
+  return canvas.toDataURL();
 };
 
 const initCharDrawer = () => {
@@ -92,7 +115,7 @@ const initCharDrawer = () => {
   ctx.fillRect(0, 0, w, h);
   ctx.strokeStyle = '#f00';
   ctx.lineWidth = 1;
-  for (let i = 1; i < 8; i++) {
+  for (let i = 1; i < charSize; i++) {
     ctx.moveTo(0, 0.5 + i * (1 + charDrawerPixelSize));
     ctx.lineTo(w, 0.5 + i * (1 + charDrawerPixelSize));
     ctx.stroke();
@@ -101,13 +124,24 @@ const initCharDrawer = () => {
     ctx.stroke();
   }
 
+  // draw char
+  ctx.fillStyle = '#000';
+  chars[currentChar].forEach((line, j) => {
+    let y = j * (1 + charDrawerPixelSize);
+    for (let i = 0; i < charSize; i++) {
+      if (line & (1 << i)) {
+        let x = i * (1 + charDrawerPixelSize);
+        ctx.fillRect(1 + x, 1 + y, charDrawerPixelSize, charDrawerPixelSize);
+      }
+    }
+  });
+
   canvas.onclick = togglePixel;
 };
 
 const selectChar = (e) => {
   currentChar = parseInt(e.target.id.slice(4), 16);
   initCharDrawer();
-  console.log(currentChar);
 };
 
 const getMousePos = (e, canvas) => {
@@ -120,10 +154,31 @@ const getMousePos = (e, canvas) => {
 
 const togglePixel = (e) => {
   const pos = getMousePos(e, e.target);
-  const x = Math.floor(pos.x / (1 + charDrawerPixelSize));
-  const y = Math.floor(pos.y / (1 + charDrawerPixelSize));
+  const i = Math.floor(pos.x / (1 + charDrawerPixelSize));
+  const j = Math.floor(pos.y / (1 + charDrawerPixelSize));
+
+  const bitSelect = (1 << i);
+  chars[currentChar][j] ^= bitSelect;
 
   saveChars();
+
+  // redraw pixel
+  const pxValue = chars[currentChar][j] & bitSelect;
+  const canvas = document.getElementById('chardrawer');
+  const ctx = canvas.getContext('2d');
+  if (pxValue) {
+    ctx.fillStyle = '#000';
+  } else {
+    ctx.fillStyle = '#fff';
+  }
+  const x = i * (1 + charDrawerPixelSize);
+  const y = j * (1 + charDrawerPixelSize);
+  ctx.fillRect(1 + x, 1 + y, charDrawerPixelSize, charDrawerPixelSize);
+
+  // redraw charpicker
+  const hidx = toHexString([currentChar]);
+  const img = document.getElementById(`char${hidx}`);
+  img.setAttribute('src', charImg(currentChar));
 };
 
 const toHexString = (byteArray) => {
@@ -133,5 +188,5 @@ const toHexString = (byteArray) => {
 }
 
 const fromHexString = (hex) => {
-
+  return new Uint8Array(hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
 }
