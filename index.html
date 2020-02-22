@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <style>
         .charimg {
@@ -49,6 +49,17 @@
             </div>
             <div class="col">
                 <textarea name="charbuffer" id="charbuffer" class="textmode" cols="80" rows="30"></textarea>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col">
+                <div class="custom-file">
+                    <input type="file" accept="application/json" class="custom-file-input" id="import">
+                    <label class="custom-file-label" for="import">Import</label>
+                </div>
+            </div>
+            <div class="col">
+                <a href="" download="font.json" id="export" class="btn btn-secondary">Export</a>
             </div>
         </div>
     </div>
