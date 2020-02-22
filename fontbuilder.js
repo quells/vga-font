@@ -13,6 +13,7 @@ window.onload = () => {
   initCharDrawer();
   initModeSelector();
   initCharBuffer();
+  initImporter();
 
   redrawFrameBuffer();
 };
@@ -31,7 +32,13 @@ const loadChars = () => {
 
 const saveChars = () => {
   const toSave = chars.map((char) => toHexString(char));
-  localStorage.setItem('font', JSON.stringify(toSave));
+  const data = JSON.stringify(toSave);
+  
+  localStorage.setItem('font', data);
+  
+  const dataURI = `data:application/json;base64,${btoa(data)}`;
+  const exporter = document.getElementById('export');
+  exporter.setAttribute('href', dataURI);
 };
 
 const initChars = () => {
@@ -90,6 +97,17 @@ const initCharPicker = () => {
   table.appendChild(tbody);
 };
 
+const redrawChars = () => {
+  for (let j = 0; j < 16; j++) {
+    const jh = j.toString(16);
+    for (let i = 0; i < 16; i++) {
+      const ih = i.toString(16);
+      const img = document.getElementById(`char${jh}${ih}`);
+      img.setAttribute('src', charImg(j*16 + i).toDataURL());
+    }
+  }
+};
+
 const charImg = (idx) => {
   const char = chars[idx];
   const canvas = document.createElement('canvas');
@@ -143,6 +161,29 @@ const initCharDrawer = () => {
   });
 
   canvas.onclick = togglePixel;
+};
+
+const initImporter = () => {
+  const fileinput = document.getElementById('import');
+  fileinput.addEventListener('change', (e) => {
+    if (fileinput.files && fileinput.files.length) {
+      const file = fileinput.files[0];
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const result = JSON.parse(fr.result);
+          localStorage.setItem('font', JSON.stringify(result));
+
+          loadChars();
+          redrawChars();
+          redrawFrameBuffer();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      fr.readAsBinaryString(file);
+    }
+  });
 };
 
 const selectChar = (e) => {
